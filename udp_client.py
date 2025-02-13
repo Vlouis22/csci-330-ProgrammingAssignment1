@@ -4,7 +4,7 @@ import sys  # needed to get cmd line parameters
 import os.path as path  # needed to get size of file in bytes
 
 
-IP = '20.33.20.21'  # change to the IP address of the server
+IP = '10.33.20.21'  # change to the IP address of the server
 PORT = 12000  # change to a desired port number
 BUFFER_SIZE = 1024  # change to a desired buffer size
 
@@ -39,31 +39,33 @@ def send_file(filename: str):
         # send the file size in the first 8-bytes followed by the bytes
         # for the file name to server at (IP, PORT)
         # TODO: section 2 step 6 in README.md file
-
         file_name = file_size_8byte + filename.encode('utf-8') 
         client_socket.sendto(file_name, (IP, PORT))
         # TODO: section 2 step 7 in README.md file
+        print("file name sent")
         try:
             data, server = client_socket.recvfrom(BUFFER_SIZE)
             print(data.decode('utf-8'))
         except:
             raise Exception("Bad server response - was not go ahead!")
         # open the file to be transferred
-        with open(file_name, 'rb') as file:
+
+        # i had to change filename to file_name to get it to work
+        with open(filename, 'rb') as file:
             # read the file in chunks and send each chunk to the server
             # TODO: section 2 step 8 a-d in README.md file
             while True:
                 data = file.read(BUFFER_SIZE)
-                if not data:
+                if len(data) > 0:
+                    sha256_object = hashlib.sha256(data)
+                    client_socket.sendto(data, (IP, PORT))
+                else:
                     break
-                sha256_object = hashlib.sha256(data)
-                client_socket.sendto(data, (IP, PORT))
                 try:
                     data, server = client_socket.recvfrom(BUFFER_SIZE)
                     print(data.decode('utf-8'))
                 except:
                     raise Exception("Bad server response - was not received!")
-            pass  # replace this line with your code
 
         # send the hash value so server can verify that the file was
         # received correctly.
